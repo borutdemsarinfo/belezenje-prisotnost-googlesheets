@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Urnik">
+<meta name="theme-color" content="#a8734a">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23a8734a'/%3E%3Ccircle cx='50' cy='55' r='28' fill='none' stroke='white' stroke-width='6'/%3E%3Cline x1='50' y1='55' x2='50' y2='38' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3Cline x1='50' y1='55' x2='63' y2='55' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3Crect x='36' y='16' width='8' height='14' rx='3' fill='white'/%3E%3Crect x='56' y='16' width='8' height='14' rx='3' fill='white'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23a8734a'/%3E%3Ccircle cx='50' cy='55' r='28' fill='none' stroke='white' stroke-width='6'/%3E%3Cline x1='50' y1='55' x2='50' y2='38' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3Cline x1='50' y1='55' x2='63' y2='55' stroke='white' stroke-width='6' stroke-linecap='round'/%3E%3Crect x='36' y='16' width='8' height='14' rx='3' fill='white'/%3E%3Crect x='56' y='16' width='8' height='14' rx='3' fill='white'/%3E%3C/svg%3E">
+<title>Urnik in prisotnost</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --card: #ffffff;
+    --ink: #2b2926;
+    --ink-soft: #6b6660;
+    --accent: #a8734a;
+    --accent-dark: #8a5c38;
+    --border: #e8e3dc;
+    --success-bg: #eef5ee;
+    --success-ink: #3f6b3f;
+    --danger-ink: #a13d3d;
+    --admin-bg: #f4efe6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 20px 14px 60px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  h1 { font-size: 1.4rem; font-weight: 650; margin: 4px 0 2px; }
+  .subtitle { color: var(--ink-soft); font-size: 0.9rem; margin-bottom: 16px; }
+
+  .tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .tab-btn {
+    background: none; border: none; padding: 10px 12px; font-size: 0.85rem; font-weight: 600;
+    color: var(--ink-soft); cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent;
+  }
+  .tab-btn.active { color: var(--accent-dark); border-bottom-color: var(--accent); }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .card h2 { font-size: 1rem; margin: 0 0 14px; font-weight: 600; }
+  .day-group { margin-bottom: 18px; }
+  .day-title { font-size: 0.8rem; font-weight: 700; color: var(--accent-dark); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 8px; }
+  .termin-btn {
+    display: flex; justify-content: space-between; align-items: center; width: 100%;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 8px; cursor: pointer; text-align: left; font-size: 0.9rem;
+  }
+  .termin-btn:hover { border-color: var(--accent); }
+  .termin-btn .t-time { font-weight: 650; color: var(--ink); }
+  .termin-btn .t-label { color: var(--ink-soft); font-size: 0.82rem; margin-top: 2px; }
+  .termin-btn .chev { color: var(--ink-soft); font-size: 1.1rem; }
+  .empty { color: var(--ink-soft); font-size: 0.88rem; padding: 10px 0; }
+
+  label { display: block; font-size: 0.8rem; color: var(--ink-soft); margin-bottom: 5px; font-weight: 500; }
+  .field { margin-bottom: 13px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  input[type=text], input[type=date], input[type=time], input[type=password], select {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 9px;
+    font-size: 0.92rem; background: #fff; color: var(--ink); font-family: inherit;
+  }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  button.primary {
+    background: var(--accent); color: #fff; border: none; padding: 11px;
+    border-radius: 9px; font-size: 0.92rem; font-weight: 600; cursor: pointer;
+  }
+  button.primary.full { width: 100%; }
+  button.primary:hover { background: var(--accent-dark); }
+  button.primary:disabled { opacity: 0.5; cursor: default; }
+  button.secondary {
+    background: #fff; color: var(--accent-dark); border: 1px solid var(--accent);
+    padding: 8px 12px; border-radius: 8px; font-size: 0.83rem; font-weight: 600; cursor: pointer;
+  }
+  button.secondary:hover { background: var(--admin-bg); }
+  button.text-btn { background: none; border: none; color: var(--accent-dark); font-size: 0.82rem; cursor: pointer; padding: 4px 6px; }
+  .msg { font-size: 0.85rem; margin-top: 10px; text-align: center; }
+  .msg.ok { color: var(--success-ink); }
+  .msg.err { color: var(--danger-ink); }
+
+  /* Modal */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(30,26,20,0.45);
+    display: none; align-items: flex-start; justify-content: center; padding: 30px 14px; z-index: 50; overflow-y: auto;
+  }
+  .overlay.active { display: flex; }
+  .modal {
+    background: #fff; border-radius: 16px; padding: 22px; max-width: 480px; width: 100%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  }
+  .modal-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+  .modal-head h3 { margin: 0; font-size: 1.05rem; }
+  .modal-close { background: none; border: none; font-size: 1.3rem; color: var(--ink-soft); cursor: pointer; line-height: 1; }
+  .modal-sub { color: var(--ink-soft); font-size: 0.85rem; margin-bottom: 16px; }
+  .trainer-block { margin-bottom: 10px; }
+  .checklist { max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 6px 4px; }
+  .check-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; }
+  .check-row:hover { background: var(--bg); }
+  .check-row input { width: 18px; height: 18px; }
+  .check-row label { margin: 0; font-size: 0.9rem; color: var(--ink); font-weight: 400; }
+  .quick-toggle { text-align: right; margin-bottom: 6px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 8px 7px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { color: var(--ink-soft); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  td.num, th.num { text-align: right; }
+  .table-scroll { overflow-x: auto; }
+  .pill { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 0.76rem; font-weight: 650; }
+  .pill.yes { background: var(--success-bg); color: var(--success-ink); }
+  .pill.no { background: #f6e9e9; color: var(--danger-ink); }
+
+  .summary-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: var(--bg); border-radius: 8px; font-size: 0.88rem; }
+  .summary-row .name { font-weight: 550; }
+  .summary-row .val { color: var(--accent-dark); font-weight: 650; }
+
+  .admin-card { background: var(--admin-bg); border-color: #ddc9ab; }
+  .admin-login-row { display: flex; gap: 8px; align-items: flex-end; }
+  .admin-login-row .field { flex: 1; margin-bottom: 0; }
+  .badge { display: inline-block; background: var(--accent); color: #fff; font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; margin-left: 8px; vertical-align: middle; }
+  .hidden { display: none !important; }
+  .chip-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .chip { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 5px 6px 5px 12px; font-size: 0.83rem; }
+  .chip button { background: none; border: none; color: var(--danger-ink); cursor: pointer; font-size: 0.9rem; line-height: 1; padding: 2px 4px; }
+  .add-row { display: flex; gap: 8px; }
+  .add-row input, .add-row select { flex: 1; }
+  hr.sep { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+  .termin-admin-row { border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+  .termin-admin-row .meta { font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+  .termin-admin-row .meta-wrap { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .termin-edit-form { margin-bottom: 10px; }
+  .termin-admin-row .sub { font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 8px; }
+  .loading { text-align: center; color: var(--ink-soft); font-size: 0.88rem; padding: 16px 0; }
+
+  table.timetable { width: 100%; border-collapse: collapse; min-width: 560px; }
+  table.timetable th, table.timetable td { border: 1px solid var(--border); padding: 8px; vertical-align: top; }
+  table.timetable thead th { background: var(--bg); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.02em; color: var(--ink-soft); text-align: center; }
+  table.timetable td.timecol { font-weight: 650; font-size: 0.8rem; white-space: nowrap; background: var(--bg); text-align: center; }
+  .slot-btn {
+    display: block; width: 100%; background: #fff; border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 9px; margin-bottom: 6px; cursor: pointer; text-align: left; font-size: 0.82rem;
+  }
+  .slot-btn:hover { border-color: var(--accent); }
+  .slot-btn .lbl { color: var(--ink-soft); font-size: 0.74rem; margin-top: 2px; }
+  .slot-empty { color: var(--border); text-align: center; display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="msg err hidden" id="storage-warning" style="background:#f6e9e9; padding:12px 14px; border-radius:10px; margin-bottom:14px; text-align:left;"></div>
+  <h1>Urnik in prisotnost</h1>
+  <div class="subtitle">Izberi termin, potrdi trenerje in prisotnost udeležencev.</div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-view="urnik">Urnik</button>
+    <button class="tab-btn" data-view="ure">Ure trenerjev</button>
+    <button class="tab-btn" data-view="prisotnost">Prisotnost udeležencev</button>
+    <button class="tab-btn" data-view="prispevki">Prispevki</button>
+    <button class="tab-btn" data-view="izvoz">Izvoz</button>
+    <button class="tab-btn" data-view="admin">Skrbništvo</button>
+  </div>
+
+  <!-- URNIK -->
+  <div class="view active" id="view-urnik">
+    <div class="card">
+      <h2>Tedenski urnik</h2>
+      <div id="schedule-list"><div class="loading">Nalagam...</div></div>
+    </div>
+  </div>
+
+  <!-- URE TRENERJEV -->
+  <div class="view" id="view-ure">
+    <div class="card">
+      <h2>Skupno ure po trenerjih</h2>
+      <div id="trainer-summary" class="summary-list"><div class="loading">Nalagam...</div></div>
+    </div>
+    <div class="card">
+      <h2>Vsi zabeleženi termini (ure trenerjev)</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Datum</th><th>Skupina</th><th>Termin</th><th>Trener</th><th class="num">Ure</th></tr></thead>
+          <tbody id="trainer-rows"><tr><td colspan="5" class="loading">Nalagam...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRISOTNOST UDELEŽENCEV -->
+  <div class="view" id="view-prisotnost">
+    <div class="card">
+      <h2>Prisotnost po skupini</h2>
+      <div class="field">
+        <label for="prisotnost-select">Izberi skupino/termin</label>
+        <select id="prisotnost-select"><option value="">— izberi —</option></select>
+      </div>
+      <div class="table-scroll">
+        <table id="prisotnost-grid">
+          <thead><tr id="prisotnost-grid-head"></tr></thead>
+          <tbody id="prisotnost-grid-body"><tr><td class="loading">Nalagam...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRISPEVKI -->
+  <div class="view" id="view-prispevki">
+    <div class="card">
+      <h2>Plačilo prostovoljnega prispevka</h2>
+      <div class="note-text" style="margin-top:-8px;">Klik na kljukico odpre okno za izbiro trenerja, ki je prispevek prevzel. Datum se zabeleži samodejno.</div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Ime in priimek</th><th style="text-align:center;">1. polletje</th><th style="text-align:center;">2. polletje</th></tr></thead>
+          <tbody id="contrib-rows"><tr><td colspan="3" class="loading">Nalagam...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- IZVOZ -->
+  <div class="view" id="view-izvoz">
+    <div class="card">
+      <h2>Izvoz v Excel</h2>
+      <div class="field">
+        <label>Obdobje</label>
+        <div class="row">
+          <label style="display:flex; align-items:center; gap:6px; font-weight:400; color: var(--ink);">
+            <input type="radio" name="period-mode" value="month" checked style="width:auto;"> Mesec
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-weight:400; color: var(--ink);">
+            <input type="radio" name="period-mode" value="range" style="width:auto;"> Obdobje (od–do)
+          </label>
+        </div>
+      </div>
+
+      <div id="period-month-fields" class="row field">
+        <div>
+          <label for="export-month">Mesec</label>
+          <select id="export-month">
+            <option value="0">Januar</option>
+            <option value="1">Februar</option>
+            <option value="2">Marec</option>
+            <option value="3">April</option>
+            <option value="4">Maj</option>
+            <option value="5">Junij</option>
+            <option value="6">Julij</option>
+            <option value="7">Avgust</option>
+            <option value="8">September</option>
+            <option value="9">Oktober</option>
+            <option value="10">November</option>
+            <option value="11">December</option>
+          </select>
+        </div>
+        <div>
+          <label for="export-year">Leto</label>
+          <input type="text" id="export-year" inputmode="numeric" maxlength="4">
+        </div>
+      </div>
+
+      <div id="period-range-fields" class="row field hidden">
+        <div><label for="export-from">Od</label><input type="date" id="export-from"></div>
+        <div><label for="export-to">Do</label><input type="date" id="export-to"></div>
+      </div>
+
+      <button class="primary full" id="export-btn">Izvozi v Excel</button>
+      <div class="msg" id="export-msg"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="view" id="view-admin">
+    <div class="card admin-card">
+      <h2>Skrbništvo <span id="admin-badge" class="badge hidden">prijavljen</span></h2>
+      <div id="admin-login">
+        <div class="admin-login-row">
+          <div class="field"><label for="admin-pin">Geslo administratorja</label><input type="password" id="admin-pin" placeholder="Geslo"></div>
+          <button class="secondary" id="admin-login-btn">Prijava</button>
+        </div>
+        <div class="msg err" id="admin-msg"></div>
+      </div>
+
+      <div id="admin-panel" class="hidden">
+        <button class="secondary" id="admin-logout-btn" style="margin-bottom:16px;">Odjava</button>
+
+        <h2>Trenerji (skupni seznam)</h2>
+        <div class="add-row">
+          <input type="text" id="new-trainer" placeholder="Ime in priimek trenerja">
+          <button class="secondary" id="add-trainer-btn">Dodaj</button>
+        </div>
+        <div class="chip-list" id="trainer-chips"></div>
+
+        <hr class="sep">
+
+        <h2>Termini v urniku</h2>
+
+        <h3 style="font-size:0.88rem; margin:0 0 8px;">Hitri uvoz skupin iz Excela</h3>
+        <div class="note-text" style="margin-top:-4px;">1. vrstica naj vsebuje glave. Stolpci po vrsti: Dan (npr. Ponedeljek), Ura od (npr. 15:00), Ura do (npr. 16:00), Ime skupine.</div>
+        <div class="field">
+          <input type="file" id="import-termini-file" accept=".xlsx,.xls">
+        </div>
+        <button class="secondary" id="import-termini-btn">Uvozi termine</button>
+        <div class="msg" id="import-termini-msg"></div>
+
+        <hr class="sep">
+
+        <h3 style="font-size:0.88rem; margin:0 0 8px;">Ročno dodaj en termin</h3>
+        <div class="field row">
+          <div>
+            <label for="new-day">Dan</label>
+            <select id="new-day">
+              <option value="0">Ponedeljek</option>
+              <option value="1">Torek</option>
+              <option value="2">Sreda</option>
+              <option value="3">Četrtek</option>
+              <option value="4">Petek</option>
+              <option value="5">Sobota</option>
+              <option value="6">Nedelja</option>
+            </select>
+          </div>
+          <div>
+            <label for="new-label">Naziv/skupina</label>
+            <input type="text" id="new-label" placeholder="npr. Skupina A">
+          </div>
+        </div>
+        <div class="row field">
+          <div><label for="new-start">Začetek</label><select id="new-start"><option value="">Izberi uro</option></select></div>
+          <div><label for="new-end">Konec</label><select id="new-end"><option value="">Izberi uro</option></select></div>
+        </div>
+        <button class="secondary" id="add-termin-btn">Dodaj termin</button>
+        <div class="msg" id="add-termin-msg"></div>
+
+        <hr class="sep">
+
+        <h2>Uvoz udeležencev iz Excela</h2>
+        <div class="note-text" style="margin-top:-8px;">Datoteka naj ima v 1. vrstici glave, v 1. stolpcu ime in priimek, v 2. stolpcu naziv skupine (mora se ujemati z nazivom termina zgoraj).</div>
+        <div class="field">
+          <input type="file" id="import-file" accept=".xlsx,.xls">
+        </div>
+        <button class="secondary" id="import-btn">Uvozi</button>
+        <div class="msg" id="import-msg"></div>
+
+        <hr class="sep">
+
+        <div id="termin-admin-list" style="margin-top:16px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">Termin</h3>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <div class="modal-sub" id="modal-sub"></div>
+
+    <div class="field">
+      <label for="session-date">Datum izvedbe</label>
+      <input type="date" id="session-date">
+    </div>
+
+    <div class="trainer-block">
+      <label>Trener 1</label>
+      <select id="trainer-1"><option value="">— izberi trenerja —</option></select>
+    </div>
+    <div class="trainer-block hidden" id="trainer-2-block">
+      <label>Trener 2</label>
+      <select id="trainer-2"><option value="">— brez —</option></select>
+    </div>
+    <div class="trainer-block hidden" id="trainer-3-block">
+      <label>Trener 3</label>
+      <select id="trainer-3"><option value="">— brez —</option></select>
+    </div>
+
+    <label style="margin-top:14px;">Prisotnost udeležencev</label>
+    <div class="quick-toggle"><button class="text-btn" id="toggle-all-btn">Označi vse kot prisotne</button></div>
+    <div class="checklist" id="participant-checklist"></div>
+
+    <button class="primary full" id="confirm-btn" style="margin-top:16px;">Potrdi vnos</button>
+    <div class="msg" id="modal-msg"></div>
+  </div>
+</div>
+
+<!-- MODAL: PRISPEVEK -->
+<div class="overlay" id="contrib-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Prevzem prispevka</h3>
+      <button class="modal-close" id="contrib-modal-close">✕</button>
+    </div>
+    <div class="modal-sub" id="contrib-modal-sub"></div>
+    <div class="field">
+      <label for="contrib-trainer-select">Trener, ki je prispevek prevzel</label>
+      <select id="contrib-trainer-select"><option value="">— izberi trenerja —</option></select>
+    </div>
+    <button class="primary full" id="contrib-confirm-btn">Potrdi prevzem</button>
+    <div class="msg" id="contrib-modal-msg"></div>
+  </div>
+</div>
+
+<script>
+  // ==========================================================
+  // GOOGLE SHEETS BACKEND - namesto Claude window.storage
+  // ==========================================================
+  // 1) Namesti Google Apps Script po navodilih v datoteki
+  //    "google-apps-script-koda.gs.txt".
+  // 2) Dobljeni "Web app URL" (konča se na /exec) prilepi spodaj
+  //    namesto SEM_PRILEPI_SVOJ_WEB_APP_URL.
+  const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbzr5fOF5LEPFuW6-OFEVzw8ZtcoJ0kmCSpMkQMDsaEWxHJ7UuFthw4WD7ToEBPXBWJH/exec";
+
+  window.storage = {
+    async get(key) {
+      const res = await fetch(`${SHEET_API_URL}?action=get&key=${encodeURIComponent(key)}`);
+      if (!res.ok) throw new Error("Napaka pri branju (" + res.status + ")");
+      return await res.json();
+    },
+    async set(key, value) {
+      const res = await fetch(SHEET_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "set", key, value })
+      });
+      if (!res.ok) throw new Error("Napaka pri shranjevanju (" + res.status + ")");
+      return await res.json();
+    },
+    async delete(key) {
+      const res = await fetch(SHEET_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "delete", key })
+      });
+      if (!res.ok) throw new Error("Napaka pri brisanju (" + res.status + ")");
+      return await res.json();
+    },
+    async list(prefix) {
+      const res = await fetch(`${SHEET_API_URL}?action=list&prefix=${encodeURIComponent(prefix || "")}`);
+      if (!res.ok) throw new Error("Napaka pri branju seznama (" + res.status + ")");
+      return await res.json();
+    }
+  };
+  // ==========================================================
+  const ADMIN_PIN = "2026";
+  let isAdmin = false;
+  const DAYS = ["Ponedeljek","Torek","Sreda","Četrtek","Petek","Sobota","Nedelja"];
+
+  let schedule = [];   // termin objects
+  let trainers = [];   // global trainer pool
+  let sessions = [];   // logged session entries
+  let contributions = {}; // { "Ime Priimek": { h1: bool, h2: bool } }
+  let currentTermin = null;
+
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : s;
+    return d.innerHTML;
+  }
+  function fmtHours(h) { return (Math.round(h * 100) / 100).toString().replace('.', ','); }
+  function durationHours(start, end) {
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    let mins = (eh * 60 + em) - (sh * 60 + sm);
+    if (mins <= 0) mins += 24 * 60;
+    return mins / 60;
+  }
+  function nextDateForDay(sloIdx) {
+    const jsTarget = (sloIdx + 1) % 7; // Mon(0)->1 ... Sun(6)->0
+    const today = new Date();
+    const diff = (jsTarget - today.getDay() + 7) % 7;
+    const d = new Date(today);
+    d.setDate(today.getDate() + diff);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // ---------------- Tabs ----------------
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    });
+  });
+
+  // ---------------- Load data ----------------
+  async function loadSchedule() {
+    try {
+      const r = await window.storage.get('schedule:list', true);
+      schedule = (r && r.value) ? JSON.parse(r.value) : [];
+    } catch (e) { schedule = []; }
+  }
+  async function loadTrainers() {
+    try {
+      const r = await window.storage.get('trainers:list', true);
+      trainers = (r && r.value) ? JSON.parse(r.value) : [];
+    } catch (e) { trainers = []; }
+  }
+  async function loadSessions() {
+    let keys = [];
+    try {
+      const res = await window.storage.list('session:', true);
+      keys = (res && res.keys) || [];
+    } catch (e) { sessions = []; return; }
+    const out = [];
+    for (const k of keys) {
+      try {
+        const r = await window.storage.get(k, true);
+        if (r && r.value) out.push({ key: k, ...JSON.parse(r.value) });
+      } catch (e) {}
+    }
+    out.sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start));
+    sessions = out;
+  }
+  async function loadContributions() {
+    try {
+      const r = await window.storage.get('contributions:data', true);
+      contributions = (r && r.value) ? JSON.parse(r.value) : {};
+    } catch (e) { contributions = {}; }
+  }
+
+  // ---------------- Render: Urnik ----------------
+  function renderSchedule() {
+    const list = document.getElementById('schedule-list');
+    if (schedule.length === 0) {
+      list.innerHTML = '<div class="empty">Urnik je še prazen. Administrator lahko doda termine v zavihku "Skrbništvo".</div>';
+      return;
+    }
+    const weekdayIdx = [0, 1, 2, 3, 4]; // Ponedeljek..Petek
+    const weekdayTermini = schedule.filter(t => weekdayIdx.includes(t.day));
+    const weekendTermini = schedule.filter(t => t.day === 5 || t.day === 6);
+
+    let html = '';
+
+    if (weekdayTermini.length > 0) {
+      const slotsMap = new Map();
+      weekdayTermini.forEach(t => {
+        const k = `${t.start}|${t.end}`;
+        if (!slotsMap.has(k)) slotsMap.set(k, { start: t.start, end: t.end });
+      });
+      const slots = Array.from(slotsMap.values()).sort((a, b) => a.start.localeCompare(b.start));
+
+      html += `<div class="table-scroll"><table class="timetable"><thead><tr><th></th>${weekdayIdx.map(d => `<th>${DAYS[d]}</th>`).join('')}</tr></thead><tbody>`;
+      slots.forEach(slot => {
+        html += `<tr><td class="timecol">${slot.start}–${slot.end}</td>`;
+        weekdayIdx.forEach(d => {
+          const matches = weekdayTermini.filter(t => t.day === d && t.start === slot.start && t.end === slot.end);
+          html += `<td>`;
+          if (matches.length === 0) {
+            html += `<span class="slot-empty">—</span>`;
+          } else {
+            matches.forEach(t => {
+              html += `<button class="slot-btn" data-id="${t.id}"><div>${escapeHtml(t.label || 'Termin')}</div><div class="lbl">${t.participants.length} udeležencev</div></button>`;
+            });
+          }
+          html += `</td>`;
+        });
+        html += `</tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+
+    if (weekendTermini.length > 0) {
+      [5, 6].forEach(d => {
+        const items = weekendTermini.filter(t => t.day === d).sort((a, b) => a.start.localeCompare(b.start));
+        if (items.length === 0) return;
+        html += `<div class="day-group" style="margin-top:16px;"><div class="day-title">${DAYS[d]}</div>`;
+        items.forEach(t => {
+          html += `
+            <button class="termin-btn" data-id="${t.id}">
+              <span><div class="t-time">${t.start}–${t.end}</div><div class="t-label">${escapeHtml(t.label || 'Termin')} · ${t.participants.length} udeležencev</div></span>
+              <span class="chev">›</span>
+            </button>`;
+        });
+        html += `</div>`;
+      });
+    }
+
+    list.innerHTML = html;
+    list.querySelectorAll('[data-id]').forEach(btn => {
+      btn.addEventListener('click', () => openModal(btn.dataset.id));
+    });
+  }
+
+  // ---------------- Modal ----------------
+  const overlay = document.getElementById('overlay');
+  const modalTitle = document.getElementById('modal-title');
+  const modalSub = document.getElementById('modal-sub');
+  const sessionDate = document.getElementById('session-date');
+  const trainer1 = document.getElementById('trainer-1');
+  const trainer2 = document.getElementById('trainer-2');
+  const trainer3 = document.getElementById('trainer-3');
+  const trainer2Block = document.getElementById('trainer-2-block');
+  const trainer3Block = document.getElementById('trainer-3-block');
+  const participantChecklist = document.getElementById('participant-checklist');
+  const modalMsg = document.getElementById('modal-msg');
+  const confirmBtn = document.getElementById('confirm-btn');
+
+  function trainerOptions(selectEl, exclude, placeholder) {
+    const opts = trainers.filter(t => !exclude.includes(t));
+    selectEl.innerHTML = `<option value="">${placeholder}</option>` + opts.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+  }
+
+  function openModal(terminId) {
+    const t = schedule.find(x => x.id === terminId);
+    if (!t) return;
+    currentTermin = t;
+    modalTitle.textContent = `${DAYS[t.day]} · ${t.start}–${t.end}`;
+    modalSub.textContent = t.label ? t.label : 'Termin';
+    sessionDate.value = nextDateForDay(t.day);
+
+    trainer2Block.classList.add('hidden');
+    trainer3Block.classList.add('hidden');
+    trainerOptions(trainer1, [], '— izberi trenerja —');
+    trainer1.value = '';
+    trainer2.value = '';
+    trainer3.value = '';
+
+    participantChecklist.innerHTML = t.participants.length === 0
+      ? '<div class="empty">Ta termin še nima dodanih udeležencev (uredi v Skrbništvu).</div>'
+      : t.participants.map(p => `
+          <div class="check-row">
+            <input type="checkbox" id="p-${escapeHtml(p)}" data-name="${escapeHtml(p)}">
+            <label for="p-${escapeHtml(p)}">${escapeHtml(p)}</label>
+          </div>`).join('');
+
+    modalMsg.textContent = '';
+    overlay.classList.add('active');
+  }
+  function closeModal() { overlay.classList.remove('active'); currentTermin = null; }
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+
+  trainer1.addEventListener('change', () => {
+    if (trainer1.value) {
+      trainerOptions(trainer2, [trainer1.value], '— brez —');
+      trainer2Block.classList.remove('hidden');
+    } else {
+      trainer2Block.classList.add('hidden');
+      trainer3Block.classList.add('hidden');
+    }
+    trainer2.value = ''; trainer3.value = '';
+  });
+  trainer2.addEventListener('change', () => {
+    if (trainer2.value) {
+      trainerOptions(trainer3, [trainer1.value, trainer2.value], '— brez —');
+      trainer3Block.classList.remove('hidden');
+    } else {
+      trainer3Block.classList.add('hidden');
+    }
+    trainer3.value = '';
+  });
+
+  document.getElementById('toggle-all-btn').addEventListener('click', () => {
+    const boxes = participantChecklist.querySelectorAll('input[type=checkbox]');
+    const allChecked = Array.from(boxes).every(b => b.checked);
+    boxes.forEach(b => b.checked = !allChecked);
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    if (!currentTermin) return;
+    if (!sessionDate.value) { modalMsg.textContent = 'Izberi datum.'; modalMsg.className = 'msg err'; return; }
+    if (!trainer1.value) { modalMsg.textContent = 'Izberi vsaj enega trenerja.'; modalMsg.className = 'msg err'; return; }
+
+    const trainerNames = [trainer1.value, trainer2.value, trainer3.value].filter(Boolean);
+    const attendance = {};
+    participantChecklist.querySelectorAll('input[type=checkbox]').forEach(box => {
+      attendance[box.dataset.name] = box.checked;
+    });
+
+    const hours = durationHours(currentTermin.start, currentTermin.end);
+    const key = `session:${currentTermin.id}__${sessionDate.value}`;
+    const payload = {
+      terminId: currentTermin.id,
+      date: sessionDate.value,
+      day: currentTermin.day,
+      start: currentTermin.start,
+      end: currentTermin.end,
+      label: currentTermin.label || '',
+      trainers: trainerNames,
+      hours,
+      attendance
+    };
+
+    confirmBtn.disabled = true;
+    try {
+      const result = await window.storage.set(key, JSON.stringify(payload), true);
+      if (!result) throw new Error('fail');
+      modalMsg.textContent = 'Vnos shranjen ✓';
+      modalMsg.className = 'msg ok';
+      await loadSessions();
+      renderTrainerTables();
+      renderParticipantGrid();
+      setTimeout(closeModal, 700);
+    } catch (e) {
+      modalMsg.textContent = 'Napaka pri shranjevanju. Poskusi znova.';
+      modalMsg.className = 'msg err';
+    } finally {
+      confirmBtn.disabled = false;
+    }
+  });
+
+  // ---------------- Ure trenerjev ----------------
+  function renderTrainerTables() {
+    const rowsBody = document.getElementById('trainer-rows');
+    const summaryEl = document.getElementById('trainer-summary');
+    const rows = [];
+    const totals = {};
+    sessions.forEach(s => {
+      const terminLabel = `${DAYS[s.day]} ${s.start}–${s.end}`;
+      const groupLabel = s.label || '';
+      const trainerNames = s.trainers.join(', ');
+      const hoursDisplay = s.trainers.map(() => fmtHours(s.hours)).join(' + ');
+      rows.push({ date: s.date, group: groupLabel, termin: terminLabel, trainers: trainerNames, hoursDisplay });
+      s.trainers.forEach(tr => { totals[tr] = (totals[tr] || 0) + s.hours; });
+    });
+    rowsBody.innerHTML = rows.length === 0
+      ? '<tr><td colspan="5" class="empty">Še ni zabeleženih terminov.</td></tr>'
+      : rows.map(r => `<tr><td>${r.date}</td><td>${escapeHtml(r.group)}</td><td>${escapeHtml(r.termin)}</td><td>${escapeHtml(r.trainers)}</td><td class="num">${r.hoursDisplay}</td></tr>`).join('');
+
+    const names = Object.keys(totals).sort((a, b) => totals[b] - totals[a]);
+    summaryEl.innerHTML = names.length === 0
+      ? '<div class="empty">Ni podatkov.</div>'
+      : names.map(n => `<div class="summary-row"><span class="name">${escapeHtml(n)}</span><span class="val">${fmtHours(totals[n])} h</span></div>`).join('');
+  }
+
+  // ---------------- Prisotnost udeležencev ----------------
+  const prisotnostSelect = document.getElementById('prisotnost-select');
+
+  function populatePrisotnostSelect() {
+    const current = prisotnostSelect.value;
+    const sorted = schedule.slice().sort((a, b) => a.day - b.day || a.start.localeCompare(b.start));
+    prisotnostSelect.innerHTML = '<option value="">— izberi —</option>' +
+      sorted.map(t => `<option value="${t.id}">${DAYS[t.day]} ${t.start}–${t.end}${t.label ? ' · ' + escapeHtml(t.label) : ''}</option>`).join('');
+    if (sorted.some(t => t.id === current)) {
+      prisotnostSelect.value = current;
+    } else if (sorted.length > 0) {
+      prisotnostSelect.value = sorted[0].id;
+    }
+  }
+
+  function renderParticipantGrid() {
+    const terminId = prisotnostSelect.value;
+    const head = document.getElementById('prisotnost-grid-head');
+    const body = document.getElementById('prisotnost-grid-body');
+
+    if (!terminId) {
+      head.innerHTML = '';
+      body.innerHTML = '<tr><td class="empty">Najprej dodaj vsaj en termin v Skrbništvu.</td></tr>';
+      return;
+    }
+    const termin = schedule.find(t => t.id === terminId);
+    if (!termin) {
+      head.innerHTML = '';
+      body.innerHTML = '<tr><td class="empty">Ta termin ne obstaja več.</td></tr>';
+      return;
+    }
+
+    const groupSessions = sessions.filter(s => s.terminId === terminId).slice().sort((a, b) => a.date.localeCompare(b.date));
+    const names = (termin.participants || []).slice().sort((a, b) => a.localeCompare(b, 'sl'));
+
+    head.innerHTML = `<th>Ime in priimek</th>${groupSessions.map(s => `<th>${formatDateSlo(s.date)}</th>`).join('')}<th>Skupaj</th>`;
+
+    if (names.length === 0) {
+      body.innerHTML = `<tr><td colspan="${groupSessions.length + 2}" class="empty">Ta skupina še nima dodanih udeležencev (uredi v Skrbništvu).</td></tr>`;
+      return;
+    }
+    if (groupSessions.length === 0) {
+      body.innerHTML = `<tr><td colspan="2" class="empty">Za to skupino še ni zabeleženih terminov.</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = names.map(name => {
+      let present = 0, total = 0;
+      const cells = groupSessions.map(s => {
+        const has = Object.prototype.hasOwnProperty.call(s.attendance || {}, name);
+        if (has) {
+          total++;
+          const p = !!s.attendance[name];
+          if (p) present++;
+          return `<td style="text-align:center;">${p ? '<span class="pill yes">DA</span>' : '<span class="pill no">NE</span>'}</td>`;
+        }
+        return '<td style="text-align:center; color: var(--border);">—</td>';
+      }).join('');
+      return `<tr><td>${escapeHtml(name)}</td>${cells}<td class="num">${present}/${total}</td></tr>`;
+    }).join('');
+  }
+
+  prisotnostSelect.addEventListener('change', renderParticipantGrid);
+
+  // ---------------- Izvoz v Excel ----------------
+  const periodMonthFields = document.getElementById('period-month-fields');
+  const periodRangeFields = document.getElementById('period-range-fields');
+  const exportYearInput = document.getElementById('export-year');
+  const exportMsg = document.getElementById('export-msg');
+  exportYearInput.value = new Date().getFullYear();
+
+  document.querySelectorAll('input[name="period-mode"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const mode = document.querySelector('input[name="period-mode"]:checked').value;
+      periodMonthFields.classList.toggle('hidden', mode !== 'month');
+      periodRangeFields.classList.toggle('hidden', mode !== 'range');
+    });
+  });
+
+  function formatDateSlo(iso) {
+    const [y, m, d] = iso.split('-');
+    return `${d}.${m}.${y}`;
+  }
+
+  function getSelectedRange() {
+    const mode = document.querySelector('input[name="period-mode"]:checked').value;
+    if (mode === 'month') {
+      const month = parseInt(document.getElementById('export-month').value, 10);
+      const year = parseInt(exportYearInput.value, 10);
+      if (!year || isNaN(year)) return null;
+      const from = new Date(year, month, 1);
+      const to = new Date(year, month + 1, 0);
+      return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
+    } else {
+      const from = document.getElementById('export-from').value;
+      const to = document.getElementById('export-to').value;
+      if (!from || !to) return null;
+      return { from, to };
+    }
+  }
+
+  function buildTrainerSheet(filtered) {
+    const rows = [["Datum", "Skupina", "Termin", "Trener", "Ure"]];
+    const sorted = filtered.slice().sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+    const totals = {};
+    sorted.forEach(s => {
+      const terminLabel = `${DAYS[s.day]} ${s.start}–${s.end}`;
+      const groupLabel = s.label || '';
+      const trainerNames = s.trainers.join(', ');
+      const hoursDisplay = s.trainers.map(() => fmtHours(s.hours)).join(' + ');
+      rows.push([formatDateSlo(s.date), groupLabel, terminLabel, trainerNames, hoursDisplay]);
+      s.trainers.forEach(tr => { totals[tr] = (totals[tr] || 0) + s.hours; });
+    });
+    rows.push([]);
+    rows.push(["Skupaj ur po trenerju"]);
+    Object.keys(totals).sort((a, b) => totals[b] - totals[a]).forEach(n => rows.push([n, '', '', '', totals[n]]));
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{ wch: 12 }, { wch: 18 }, { wch: 22 }, { wch: 22 }, { wch: 10 }];
+    return ws;
+  }
+
+  function participantGroups(name) {
+    const labels = schedule
+      .filter(t => (t.participants || []).includes(name))
+      .map(t => t.label || `${DAYS[t.day]} ${t.start}–${t.end}`);
+    return Array.from(new Set(labels)).join(', ');
+  }
+
+  function buildParticipantSheet(filtered) {
+    const sorted = filtered.slice().sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+    const colHeaders = sorted.map(s => `${formatDateSlo(s.date)} (${s.start})${s.label ? ' – ' + s.label : ''}`);
+    const namesSet = new Set();
+    sorted.forEach(s => Object.keys(s.attendance || {}).forEach(n => namesSet.add(n)));
+    const names = Array.from(namesSet).sort((a, b) => a.localeCompare(b, 'sl'));
+
+    const rows = [["Ime in priimek", "Skupina", ...colHeaders, "Skupaj (prisoten/vseh)"]];
+    names.forEach(name => {
+      let present = 0, applicable = 0;
+      const cells = sorted.map(s => {
+        if (Object.prototype.hasOwnProperty.call(s.attendance || {}, name)) {
+          applicable++;
+          const isPresent = !!s.attendance[name];
+          if (isPresent) present++;
+          return isPresent ? 'DA' : 'NE';
+        }
+        return '';
+      });
+      rows.push([name, participantGroups(name), ...cells, `${present}/${applicable}`]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{ wch: 22 }, { wch: 18 }, ...colHeaders.map(() => ({ wch: 16 })), { wch: 16 }];
+    return ws;
+  }
+
+  function buildContributionsSheet() {
+    const names = allParticipantNames();
+    const rows = [["Ime in priimek", "Skupina", "1. polletje", "Datum (1. pol.)", "Trener (1. pol.)", "2. polletje", "Datum (2. pol.)", "Trener (2. pol.)"]];
+    names.forEach(name => {
+      const c = contributions[name] || {};
+      const h1 = c.h1 && c.h1.paid ? c.h1 : null;
+      const h2 = c.h2 && c.h2.paid ? c.h2 : null;
+      rows.push([
+        name, participantGroups(name),
+        h1 ? 'DA' : 'NE', h1 ? formatDateSlo(h1.date) : '', h1 ? h1.trainer : '',
+        h2 ? 'DA' : 'NE', h2 ? formatDateSlo(h2.date) : '', h2 ? h2.trainer : ''
+      ]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{ wch: 22 }, { wch: 18 }, { wch: 12 }, { wch: 14 }, { wch: 18 }, { wch: 12 }, { wch: 14 }, { wch: 18 }];
+    return ws;
+  }
+
+  document.getElementById('export-btn').addEventListener('click', () => {
+    exportMsg.textContent = '';
+    exportMsg.className = 'msg';
+    const range = getSelectedRange();
+    if (!range) {
+      exportMsg.textContent = 'Prosimo, izpolni izbrano obdobje.';
+      exportMsg.className = 'msg err';
+      return;
+    }
+    const filtered = sessions.filter(s => s.date >= range.from && s.date <= range.to);
+    if (filtered.length === 0) {
+      exportMsg.textContent = 'V izbranem obdobju ni zabeleženih terminov.';
+      exportMsg.className = 'msg err';
+      return;
+    }
+    try {
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, buildTrainerSheet(filtered), 'Ure trenerjev');
+      XLSX.utils.book_append_sheet(wb, buildParticipantSheet(filtered), 'Prisotnost udeležencev');
+      XLSX.utils.book_append_sheet(wb, buildContributionsSheet(), 'Prispevki');
+      const fname = `evidenca_${range.from}_${range.to}.xlsx`;
+      XLSX.writeFile(wb, fname);
+      exportMsg.textContent = 'Datoteka pripravljena za prenos ✓';
+      exportMsg.className = 'msg ok';
+    } catch (e) {
+      exportMsg.textContent = 'Napaka pri izvozu.';
+      exportMsg.className = 'msg err';
+    }
+  });
+
+  // ---------------- Prispevki ----------------
+  function allParticipantNames() {
+    const set = new Set();
+    schedule.forEach(t => (t.participants || []).forEach(p => set.add(p)));
+    Object.keys(contributions).forEach(n => set.add(n));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'sl'));
+  }
+
+  let pendingContrib = null;
+  const contribOverlay = document.getElementById('contrib-overlay');
+  const contribModalSub = document.getElementById('contrib-modal-sub');
+  const contribTrainerSelect = document.getElementById('contrib-trainer-select');
+  const contribModalMsg = document.getElementById('contrib-modal-msg');
+
+  function openContribModal(name, half, checkboxEl) {
+    pendingContrib = { name, half, checkboxEl };
+    contribModalSub.textContent = `${name} — ${half === 'h1' ? '1. polletje' : '2. polletje'}`;
+    trainerOptions(contribTrainerSelect, [], '— izberi trenerja —');
+    contribTrainerSelect.value = '';
+    contribModalMsg.textContent = '';
+    contribOverlay.classList.add('active');
+  }
+  function closeContribModal() {
+    contribOverlay.classList.remove('active');
+    pendingContrib = null;
+  }
+  document.getElementById('contrib-modal-close').addEventListener('click', closeContribModal);
+  contribOverlay.addEventListener('click', (e) => { if (e.target === contribOverlay) closeContribModal(); });
+
+  document.getElementById('contrib-confirm-btn').addEventListener('click', async () => {
+    if (!pendingContrib) return;
+    const trainer = contribTrainerSelect.value;
+    if (!trainer) {
+      contribModalMsg.textContent = 'Izberi trenerja.';
+      contribModalMsg.className = 'msg err';
+      return;
+    }
+    const { name, half, checkboxEl } = pendingContrib;
+    if (!contributions[name]) contributions[name] = {};
+    const record = { paid: true, date: new Date().toISOString().slice(0, 10), trainer };
+    const prev = contributions[name][half];
+    contributions[name][half] = record;
+    try {
+      const result = await window.storage.set('contributions:data', JSON.stringify(contributions), true);
+      if (!result) throw new Error('fail');
+      closeContribModal();
+      renderContributions();
+    } catch (e) {
+      contributions[name][half] = prev;
+      contribModalMsg.textContent = 'Napaka pri shranjevanju. Poskusi znova.';
+      contribModalMsg.className = 'msg err';
+    }
+  });
+
+  function renderContributions() {
+    const body = document.getElementById('contrib-rows');
+    const names = allParticipantNames();
+    if (names.length === 0) {
+      body.innerHTML = '<tr><td colspan="3" class="empty">Ni še udeležencev (dodaj jih pri terminih v Skrbništvu).</td></tr>';
+      return;
+    }
+    body.innerHTML = names.map(name => {
+      const c = contributions[name] || {};
+      const h1 = c.h1 && c.h1.paid;
+      const h2 = c.h2 && c.h2.paid;
+      const h1info = h1 ? `<div class="lbl">${formatDateSlo(c.h1.date)} · ${escapeHtml(c.h1.trainer)}</div>` : '';
+      const h2info = h2 ? `<div class="lbl">${formatDateSlo(c.h2.date)} · ${escapeHtml(c.h2.trainer)}</div>` : '';
+      return `
+        <tr>
+          <td>${escapeHtml(name)}</td>
+          <td style="text-align:center;"><input type="checkbox" class="contrib-box" data-name="${escapeHtml(name)}" data-half="h1" ${h1 ? 'checked' : ''}>${h1info}</td>
+          <td style="text-align:center;"><input type="checkbox" class="contrib-box" data-name="${escapeHtml(name)}" data-half="h2" ${h2 ? 'checked' : ''}>${h2info}</td>
+        </tr>`;
+    }).join('');
+
+    body.querySelectorAll('.contrib-box').forEach(box => {
+      box.addEventListener('change', async () => {
+        const name = box.dataset.name;
+        const half = box.dataset.half;
+        if (box.checked) {
+          box.checked = false; // potrdi šele po izbiri trenerja v oknu
+          openContribModal(name, half, box);
+        } else {
+          if (!contributions[name]) contributions[name] = {};
+          const prev = contributions[name][half];
+          contributions[name][half] = null;
+          try {
+            await window.storage.set('contributions:data', JSON.stringify(contributions), true);
+            renderContributions();
+          } catch (e) {
+            contributions[name][half] = prev;
+            box.checked = true;
+          }
+        }
+      });
+    });
+  }
+
+  // ---------------- Admin: prijava ----------------
+  const adminLoginBtn = document.getElementById('admin-login-btn');
+  const adminLogoutBtn = document.getElementById('admin-logout-btn');
+  const adminPinInput = document.getElementById('admin-pin');
+  const adminMsg = document.getElementById('admin-msg');
+  const adminLogin = document.getElementById('admin-login');
+  const adminPanel = document.getElementById('admin-panel');
+  const adminBadge = document.getElementById('admin-badge');
+
+  adminLoginBtn.addEventListener('click', () => {
+    if (adminPinInput.value === ADMIN_PIN) {
+      isAdmin = true;
+      adminLogin.classList.add('hidden');
+      adminPanel.classList.remove('hidden');
+      adminBadge.classList.remove('hidden');
+      adminMsg.textContent = '';
+      renderAdminTrainers();
+      renderAdminSchedule();
+      renderContributions();
+    } else {
+      adminMsg.textContent = 'Napačno geslo.';
+    }
+    adminPinInput.value = '';
+  });
+  adminPinInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adminLoginBtn.click(); } });
+  adminLogoutBtn.addEventListener('click', () => {
+    isAdmin = false;
+    adminLogin.classList.remove('hidden');
+    adminPanel.classList.add('hidden');
+    adminBadge.classList.add('hidden');
+    renderContributions();
+  });
+
+  // ---------------- Admin: trenerji ----------------
+  const trainerChips = document.getElementById('trainer-chips');
+  const newTrainerInput = document.getElementById('new-trainer');
+  document.getElementById('add-trainer-btn').addEventListener('click', async () => {
+    const name = newTrainerInput.value.trim();
+    if (!name) return;
+    if (!trainers.includes(name)) {
+      trainers.push(name);
+      await window.storage.set('trainers:list', JSON.stringify(trainers), true);
+    }
+    newTrainerInput.value = '';
+    renderAdminTrainers();
+  });
+  newTrainerInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('add-trainer-btn').click(); } });
+
+  function renderAdminTrainers() {
+    trainerChips.innerHTML = trainers.length === 0
+      ? '<span class="empty">Ni še dodanih trenerjev.</span>'
+      : trainers.slice().sort((a,b)=>a.localeCompare(b,'sl')).map(t => `<span class="chip">${escapeHtml(t)}<button data-t="${escapeHtml(t)}">✕</button></span>`).join('');
+    trainerChips.querySelectorAll('button[data-t]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        trainers = trainers.filter(t => t !== btn.dataset.t);
+        await window.storage.set('trainers:list', JSON.stringify(trainers), true);
+        renderAdminTrainers();
+      });
+    });
+  }
+
+  // ---------------- Admin: termini ----------------
+  const addTerminMsg = document.getElementById('add-termin-msg');
+  document.getElementById('add-termin-btn').addEventListener('click', async () => {
+    const day = parseInt(document.getElementById('new-day').value, 10);
+    const label = document.getElementById('new-label').value.trim();
+    const start = document.getElementById('new-start').value;
+    const end = document.getElementById('new-end').value;
+    if (!start || !end) {
+      addTerminMsg.textContent = 'Vnesi začetek in konec termina.';
+      addTerminMsg.className = 'msg err';
+      return;
+    }
+    const termin = { id: `t${Date.now()}${Math.random().toString(36).slice(2,6)}`, day, label, start, end, participants: [] };
+    schedule.push(termin);
+    try {
+      const result = await window.storage.set('schedule:list', JSON.stringify(schedule), true);
+      if (!result) throw new Error('fail');
+      document.getElementById('new-label').value = '';
+      document.getElementById('new-start').value = '';
+      document.getElementById('new-end').value = '';
+      addTerminMsg.textContent = 'Termin dodan ✓';
+      addTerminMsg.className = 'msg ok';
+      setTimeout(() => { addTerminMsg.textContent = ''; }, 2500);
+      renderAdminSchedule();
+      renderSchedule();
+      populatePrisotnostSelect();
+      renderParticipantGrid();
+    } catch (e) {
+      schedule.pop();
+      addTerminMsg.textContent = 'Napaka pri shranjevanju. Poskusi znova.';
+      addTerminMsg.className = 'msg err';
+    }
+  });
+
+  function startEditTermin(id, row) {
+    const t = schedule.find(x => x.id === id);
+    if (!t) return;
+    const metaWrap = row.querySelector('.meta-wrap');
+    metaWrap.outerHTML = `
+      <div class="termin-edit-form">
+        <div class="row field">
+          <div>
+            <label>Dan</label>
+            <select class="edit-day">
+              ${DAYS.map((d, i) => `<option value="${i}" ${i === t.day ? 'selected' : ''}>${d}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label>Naziv/skupina</label>
+            <input type="text" class="edit-label" value="${escapeHtml(t.label || '')}">
+          </div>
+        </div>
+        <div class="row field">
+          <div><label>Začetek</label><select class="edit-start"></select></div>
+          <div><label>Konec</label><select class="edit-end"></select></div>
+        </div>
+        <button class="secondary save-termin-btn">Shrani</button>
+        <button class="text-btn cancel-termin-btn">Prekliči</button>
+        <div class="msg" style="text-align:left;" id="edit-termin-msg-${t.id}"></div>
+      </div>
+    `;
+    const form = row.querySelector('.termin-edit-form');
+    generateTimeOptions(form.querySelector('.edit-start'), t.start);
+    generateTimeOptions(form.querySelector('.edit-end'), t.end);
+
+    form.querySelector('.cancel-termin-btn').addEventListener('click', () => renderAdminSchedule());
+
+    form.querySelector('.save-termin-btn').addEventListener('click', async () => {
+      const newDay = parseInt(form.querySelector('.edit-day').value, 10);
+      const newLabel = form.querySelector('.edit-label').value.trim();
+      const newStart = form.querySelector('.edit-start').value;
+      const newEnd = form.querySelector('.edit-end').value;
+      const msgEl = document.getElementById(`edit-termin-msg-${t.id}`);
+      if (!newStart || !newEnd) {
+        msgEl.textContent = 'Izberi začetek in konec.';
+        msgEl.className = 'msg err';
+        return;
+      }
+      const prev = { day: t.day, label: t.label, start: t.start, end: t.end };
+      t.day = newDay; t.label = newLabel; t.start = newStart; t.end = newEnd;
+      try {
+        const result = await window.storage.set('schedule:list', JSON.stringify(schedule), true);
+        if (!result) throw new Error('fail');
+        renderAdminSchedule();
+        renderSchedule();
+        populatePrisotnostSelect();
+        renderParticipantGrid();
+      } catch (e) {
+        Object.assign(t, prev);
+        msgEl.textContent = 'Napaka pri shranjevanju. Poskusi znova.';
+        msgEl.className = 'msg err';
+      }
+    });
+  }
+
+  function renderAdminSchedule() {
+    const container = document.getElementById('termin-admin-list');
+    if (schedule.length === 0) {
+      container.innerHTML = '<div class="empty">Ni še dodanih terminov.</div>';
+      return;
+    }
+    const sorted = schedule.slice().sort((a,b) => a.day - b.day || a.start.localeCompare(b.start));
+    container.innerHTML = sorted.map(t => `
+      <div class="termin-admin-row" data-id="${t.id}">
+        <div class="meta-wrap">
+          <div class="meta">${DAYS[t.day]} · ${t.start}–${t.end} ${t.label ? '· ' + escapeHtml(t.label) : ''}</div>
+          <button class="text-btn edit-termin-btn">Uredi termin</button>
+        </div>
+        <div class="sub">Udeleženci:</div>
+        <div class="chip-list participant-chip-list" style="margin-top:0; margin-bottom:10px;">
+          ${t.participants.length === 0 ? '<span class="empty">ni dodanih</span>' : t.participants.map(p => `
+            <span class="chip" data-participant="${escapeHtml(p)}">
+              <span class="participant-name">${escapeHtml(p)}</span>
+              <button class="edit-participant-btn" title="Uredi ime" style="color: var(--accent-dark);">✎</button>
+              <button class="remove-participant-btn" title="Odstrani">✕</button>
+            </span>
+          `).join('')}
+        </div>
+        <div class="add-row" style="margin-bottom:8px;">
+          <input type="text" class="new-participant" placeholder="Dodaj udeleženca">
+          <button class="secondary add-participant-btn">Dodaj</button>
+        </div>
+        <button class="text-btn delete-termin-btn" style="color:#a13d3d;">Izbriši termin</button>
+      </div>
+    `).join('');
+
+    container.querySelectorAll('.termin-admin-row').forEach(row => {
+      const id = row.dataset.id;
+
+      row.querySelector('.edit-termin-btn').addEventListener('click', () => startEditTermin(id, row));
+
+      row.querySelector('.add-participant-btn').addEventListener('click', async () => {
+        const input = row.querySelector('.new-participant');
+        const name = input.value.trim();
+        if (!name) return;
+        const t = schedule.find(x => x.id === id);
+        if (t && !t.participants.includes(name)) {
+          t.participants.push(name);
+          await window.storage.set('schedule:list', JSON.stringify(schedule), true);
+          renderAdminSchedule();
+          renderSchedule();
+          renderContributions();
+          populatePrisotnostSelect();
+          renderParticipantGrid();
+        }
+      });
+      row.querySelector('.new-participant').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); row.querySelector('.add-participant-btn').click(); }
+      });
+
+      row.querySelectorAll('.remove-participant-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const chip = btn.closest('.chip');
+          const name = chip.dataset.participant;
+          if (btn.dataset.confirming !== '1') {
+            btn.dataset.confirming = '1';
+            btn.textContent = '❗';
+            btn.title = 'Klikni še enkrat za potrditev';
+            setTimeout(() => {
+              if (btn.dataset.confirming === '1') { btn.dataset.confirming = ''; btn.textContent = '✕'; btn.title = 'Odstrani'; }
+            }, 3000);
+            return;
+          }
+          const t = schedule.find(x => x.id === id);
+          if (t) {
+            t.participants = t.participants.filter(p => p !== name);
+            await window.storage.set('schedule:list', JSON.stringify(schedule), true);
+            renderAdminSchedule();
+            renderSchedule();
+            renderContributions();
+            populatePrisotnostSelect();
+            renderParticipantGrid();
+          }
+        });
+      });
+
+      row.querySelectorAll('.edit-participant-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const chip = btn.closest('.chip');
+          const oldName = chip.dataset.participant;
+          chip.innerHTML = `
+            <input type="text" class="edit-input rename-input" value="${escapeHtml(oldName)}" style="width:140px;">
+            <button class="edit-participant-btn save-rename-btn" title="Shrani">✓</button>
+            <button class="remove-participant-btn cancel-rename-btn" title="Prekliči">✕</button>
+          `;
+          const input = chip.querySelector('.rename-input');
+          input.focus();
+          input.select();
+          const save = async () => {
+            const newName = input.value.trim();
+            if (!newName || newName === oldName) { renderAdminSchedule(); return; }
+            const result = await renameParticipantGlobally(oldName, newName);
+            renderAdminSchedule();
+            renderSchedule();
+            renderContributions();
+            populatePrisotnostSelect();
+            renderParticipantGrid();
+          };
+          chip.querySelector('.save-rename-btn').addEventListener('click', save);
+          chip.querySelector('.cancel-rename-btn').addEventListener('click', () => renderAdminSchedule());
+          input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); save(); }
+            if (e.key === 'Escape') { e.preventDefault(); renderAdminSchedule(); }
+          });
+        });
+      });
+
+      row.querySelector('.delete-termin-btn').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        if (btn.dataset.confirming !== '1') {
+          btn.dataset.confirming = '1';
+          btn.textContent = 'Res izbrisati? Klikni še enkrat';
+          setTimeout(() => {
+            if (btn.dataset.confirming === '1') {
+              btn.dataset.confirming = '';
+              btn.textContent = 'Izbriši termin';
+            }
+          }, 3000);
+          return;
+        }
+        schedule = schedule.filter(x => x.id !== id);
+        await window.storage.set('schedule:list', JSON.stringify(schedule), true);
+        renderAdminSchedule();
+        renderSchedule();
+        populatePrisotnostSelect();
+        renderParticipantGrid();
+      });
+    });
+  }
+
+  async function renameParticipantGlobally(oldName, newName) {
+    newName = newName.trim();
+    if (!newName || newName === oldName) return { ok: false };
+
+    let changedSchedule = false;
+    schedule.forEach(t => {
+      const idx = t.participants.indexOf(oldName);
+      if (idx !== -1) {
+        changedSchedule = true;
+        if (t.participants.includes(newName)) {
+          t.participants.splice(idx, 1);
+        } else {
+          t.participants[idx] = newName;
+        }
+      }
+    });
+
+    const touchedSessions = [];
+    sessions.forEach(s => {
+      if (s.attendance && Object.prototype.hasOwnProperty.call(s.attendance, oldName)) {
+        const val = s.attendance[oldName];
+        delete s.attendance[oldName];
+        if (!(newName in s.attendance)) s.attendance[newName] = val;
+        touchedSessions.push(s);
+      }
+    });
+
+    let changedContrib = false;
+    if (contributions[oldName]) {
+      if (!contributions[newName]) contributions[newName] = contributions[oldName];
+      delete contributions[oldName];
+      changedContrib = true;
+    }
+
+    try {
+      if (changedSchedule) await window.storage.set('schedule:list', JSON.stringify(schedule), true);
+      for (const s of touchedSessions) {
+        await window.storage.set(s.key, JSON.stringify({
+          terminId: s.terminId, date: s.date, day: s.day, start: s.start, end: s.end,
+          label: s.label, trainers: s.trainers, hours: s.hours, attendance: s.attendance
+        }), true);
+      }
+      if (changedContrib) await window.storage.set('contributions:data', JSON.stringify(contributions), true);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false };
+    }
+  }
+
+  function readFileAsArrayBuffer(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error('Branje datoteke ni uspelo.'));
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function parseDayValue(v) {
+    const s = (v || '').toString().trim().toLowerCase();
+    if (!s) return null;
+    let idx = DAYS.findIndex(d => d.toLowerCase() === s);
+    if (idx !== -1) return idx;
+    idx = DAYS.findIndex(d => s.length >= 3 && d.toLowerCase().startsWith(s.slice(0, 3)));
+    return idx !== -1 ? idx : null;
+  }
+
+  function parseTimeValue(v) {
+    if (v === undefined || v === null || v === '') return null;
+    if (typeof v === 'number') {
+      const totalMinutes = Math.round(v * 24 * 60);
+      const h = Math.floor(totalMinutes / 60) % 24;
+      const m = totalMinutes % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+    if (v instanceof Date) {
+      return `${String(v.getHours()).padStart(2, '0')}:${String(v.getMinutes()).padStart(2, '0')}`;
+    }
+    const s = v.toString().trim();
+    const m = s.match(/^(\d{1,2})[:.](\d{2})$/);
+    if (m) return `${m[1].padStart(2, '0')}:${m[2]}`;
+    return null;
+  }
+
+  document.getElementById('import-termini-btn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('import-termini-file');
+    const msg = document.getElementById('import-termini-msg');
+    msg.textContent = '';
+    msg.className = 'msg';
+    const file = fileInput.files[0];
+    if (!file) {
+      msg.textContent = 'Izberi Excel datoteko.';
+      msg.className = 'msg err';
+      return;
+    }
+    try {
+      const buf = await readFileAsArrayBuffer(file);
+      const wb = XLSX.read(buf, { type: 'array', cellDates: true });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      if (rows.length < 2) {
+        msg.textContent = 'Datoteka je prazna ali nima podatkov pod glavo.';
+        msg.className = 'msg err';
+        return;
+      }
+      const dataRows = rows.slice(1);
+      let added = 0;
+      const errorRows = [];
+      dataRows.forEach((r, i) => {
+        if (!r || r.every(c => c === undefined || c === '')) return; // prazna vrstica
+        const day = parseDayValue(r[0]);
+        const start = parseTimeValue(r[1]);
+        const end = parseTimeValue(r[2]);
+        const label = (r[3] || '').toString().trim();
+        if (day === null || !start || !end) {
+          errorRows.push(i + 2);
+          return;
+        }
+        schedule.push({
+          id: `t${Date.now()}${Math.random().toString(36).slice(2, 6)}${i}`,
+          day, label, start, end, participants: []
+        });
+        added++;
+      });
+      await window.storage.set('schedule:list', JSON.stringify(schedule), true);
+      renderAdminSchedule();
+      renderSchedule();
+      populatePrisotnostSelect();
+      renderParticipantGrid();
+      fileInput.value = '';
+      if (errorRows.length > 0) {
+        msg.textContent = `Dodanih ${added} terminov. Napačen format v vrsticah: ${errorRows.join(', ')} (preveri dan/ure).`;
+        msg.className = 'msg err';
+      } else {
+        msg.textContent = `Uspešno dodanih ${added} terminov.`;
+        msg.className = 'msg ok';
+      }
+    } catch (e) {
+      msg.textContent = 'Napaka pri branju datoteke: ' + (e && e.message ? e.message : e) + '. Preveri, da je v Excel (.xlsx) formatu.';
+      msg.className = 'msg err';
+    }
+  });
+
+  document.getElementById('import-btn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('import-file');
+    const msg = document.getElementById('import-msg');
+    msg.textContent = '';
+    msg.className = 'msg';
+    const file = fileInput.files[0];
+    if (!file) {
+      msg.textContent = 'Izberi Excel datoteko.';
+      msg.className = 'msg err';
+      return;
+    }
+    try {
+      const buf = await readFileAsArrayBuffer(file);
+      const wb = XLSX.read(buf, { type: 'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      if (rows.length < 2) {
+        msg.textContent = 'Datoteka je prazna ali nima podatkov pod glavo.';
+        msg.className = 'msg err';
+        return;
+      }
+      const dataRows = rows.slice(1);
+      let added = 0;
+      const unmatchedGroups = new Set();
+      dataRows.forEach(r => {
+        const name = (r[0] || '').toString().trim();
+        const group = (r[1] || '').toString().trim();
+        if (!name || !group) return;
+        const matches = schedule.filter(t => (t.label || '').trim().toLowerCase() === group.toLowerCase());
+        if (matches.length === 0) { unmatchedGroups.add(group); return; }
+        matches.forEach(t => {
+          if (!t.participants.includes(name)) { t.participants.push(name); added++; }
+        });
+      });
+      await window.storage.set('schedule:list', JSON.stringify(schedule), true);
+      renderAdminSchedule();
+      renderSchedule();
+      renderContributions();
+      populatePrisotnostSelect();
+      renderParticipantGrid();
+      fileInput.value = '';
+      if (unmatchedGroups.size > 0) {
+        msg.textContent = `Dodanih ${added} vnosov. Teh skupin nisem našel v urniku: ${Array.from(unmatchedGroups).join(', ')}.`;
+        msg.className = 'msg err';
+      } else {
+        msg.textContent = `Uspešno dodanih ${added} vnosov.`;
+        msg.className = 'msg ok';
+      }
+    } catch (e) {
+      msg.textContent = 'Napaka pri branju datoteke: ' + (e && e.message ? e.message : e) + '. Preveri, da je v Excel (.xlsx) formatu.';
+      msg.className = 'msg err';
+    }
+  });
+
+  function generateTimeOptions(selectEl, defaultVal) {
+    let html = '<option value="">Izberi uro</option>';
+    for (let m = 0; m < 24 * 60; m += 15) {
+      const h = String(Math.floor(m / 60)).padStart(2, '0');
+      const mm = String(m % 60).padStart(2, '0');
+      const val = `${h}:${mm}`;
+      html += `<option value="${val}"${val === defaultVal ? ' selected' : ''}>${val}</option>`;
+    }
+    selectEl.innerHTML = html;
+  }
+  generateTimeOptions(document.getElementById('new-start'), '15:00');
+  generateTimeOptions(document.getElementById('new-end'), '15:00');
+
+  function checkStorageAvailable() {
+    const warn = document.getElementById('storage-warning');
+    if (SHEET_API_URL === "SEM_PRILEPI_SVOJ_WEB_APP_URL" || !SHEET_API_URL) {
+      warn.textContent = 'Povezava do Google Sheets še ni nastavljena. Odpri to datoteko v urejevalniku besedila in v vrhu <script> dela zamenjaj SHEET_API_URL z URL-jem svoje Apps Script objave (glej navodila v google-apps-script-koda.gs.txt).';
+      warn.classList.remove('hidden');
+      return false;
+    }
+    return true;
+  }
+
+  // ---------------- Init ----------------
+  async function init() {
+    checkStorageAvailable();
+    await Promise.all([loadSchedule(), loadTrainers(), loadSessions(), loadContributions()]);
+    renderSchedule();
+    renderTrainerTables();
+    populatePrisotnostSelect();
+    renderParticipantGrid();
+    renderContributions();
+  }
+  init();
+</script>
+</body>
+</html>
